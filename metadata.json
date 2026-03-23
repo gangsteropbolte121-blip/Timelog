@@ -1,0 +1,5 @@
+{
+  "name": "TimeLog",
+  "description": "A personal daily time tracker with check-in, breaks, check-out, and PDF export.",
+  "requestFramePermissions": []
+}
