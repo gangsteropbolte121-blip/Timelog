@@ -3,7 +3,11 @@ import { motion } from 'motion/react';
 import { Play, Pause, SkipForward, Plus, Trash2, Bell, RotateCcw } from 'lucide-react';
 import { useTimers } from '../hooks/useTimers';
 
-export function TimersTab() {
+interface TimersTabProps {
+  timers: ReturnType<typeof useTimers>;
+}
+
+export function TimersTab({ timers }: TimersTabProps) {
   const {
     pomodoro,
     togglePomodoro,
@@ -15,7 +19,7 @@ export function TimersTab() {
     toggleAlarm,
     resetAlarm,
     deleteAlarm
-  } = useTimers();
+  } = timers;
 
   const [newAlarmName, setNewAlarmName] = useState('');
   const [newAlarmHours, setNewAlarmHours] = useState('');

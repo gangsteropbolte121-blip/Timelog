@@ -12,7 +12,78 @@ const DEFAULT_POMODORO: PomodoroState = {
   endTime: null,
 };
 
+// --- Web Audio API & Vibration for loud, persistent alarms ---
+let audioCtx: AudioContext | null = null;
+let beepInterval: number | null = null;
+let vibrateInterval: number | null = null;
+
+const unlockAudio = () => {
+  try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  } catch (e) {
+    console.error("Audio context unlock failed", e);
+  }
+};
+
+const startLoudAlarm = () => {
+  try {
+    unlockAudio();
+    if (beepInterval) clearInterval(beepInterval);
+    
+    // Create a loud, repeating dual-tone beep
+    beepInterval = window.setInterval(() => {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
+      osc.frequency.setValueAtTime(1108.73, audioCtx.currentTime + 0.1); // C#6
+      
+      gain.gain.setValueAtTime(1, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+      
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.4);
+    }, 500);
+
+    if ('vibrate' in navigator) {
+      if (vibrateInterval) clearInterval(vibrateInterval);
+      vibrateInterval = window.setInterval(() => {
+        navigator.vibrate([300, 200]);
+      }, 500);
+    }
+  } catch (e) {
+    console.error("Failed to play audio alarm", e);
+  }
+};
+
+const stopLoudAlarm = () => {
+  if (beepInterval) {
+    clearInterval(beepInterval);
+    beepInterval = null;
+  }
+  if (vibrateInterval) {
+    clearInterval(vibrateInterval);
+    vibrateInterval = null;
+    if ('vibrate' in navigator) {
+      navigator.vibrate(0);
+    }
+  }
+};
+// -------------------------------------------------------------
+
 export function useTimers() {
+  const [ringingAlarm, setRingingAlarm] = useState<{title: string, message: string} | null>(null);
+
   const [pomodoro, setPomodoro] = useState<PomodoroState>(() => {
     const saved = localStorage.getItem('timelog_pomodoro');
     if (saved) {
@@ -67,14 +138,17 @@ export function useTimers() {
     localStorage.setItem('timelog_alarms', JSON.stringify(alarms));
   }, [alarms]);
 
-  const notify = useCallback((title: string, body: string) => {
+  const triggerAlarm = useCallback((title: string, message: string) => {
     if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(title, { body, icon: '/vite.svg' });
+      new Notification(title, { body: message, icon: '/vite.svg' });
     }
-    try {
-      const audio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
-      audio.play().catch(() => {});
-    } catch (e) {}
+    startLoudAlarm();
+    setRingingAlarm({ title, message });
+  }, []);
+
+  const dismissAlarm = useCallback(() => {
+    stopLoudAlarm();
+    setRingingAlarm(null);
   }, []);
 
   useEffect(() => {
@@ -100,14 +174,14 @@ export function useTimers() {
             if (cycles % 4 === 0) {
               nextMode = 'longBreak';
               nextDuration = prev.longBreakDuration;
-              notify('Pomodoro Finished', 'Time for a long break!');
+              triggerAlarm('Pomodoro Finished', 'Time for a long break!');
             } else {
               nextMode = 'shortBreak';
               nextDuration = prev.shortBreakDuration;
-              notify('Pomodoro Finished', 'Time for a short break!');
+              triggerAlarm('Pomodoro Finished', 'Time for a short break!');
             }
           } else {
-            notify('Break Finished', 'Time to get back to work!');
+            triggerAlarm('Break Finished', 'Time to get back to work!');
           }
 
           return {
@@ -132,7 +206,7 @@ export function useTimers() {
           if (a.status !== 'running' || !a.endTime) return a;
           if (now >= a.endTime) {
             changed = true;
-            notify(a.name, 'Timer has finished!');
+            triggerAlarm(a.name, 'Timer has finished!');
             return { ...a, status: 'finished', remainingMs: 0, endTime: null };
           }
           if (Math.abs(a.remainingMs - (a.endTime - now)) > 500) {
@@ -146,9 +220,10 @@ export function useTimers() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [notify]);
+  }, [triggerAlarm]);
 
   const togglePomodoro = () => {
+    unlockAudio();
     setPomodoro(prev => {
       if (prev.status === 'running') {
         return { ...prev, status: 'paused', endTime: null };
@@ -201,6 +276,7 @@ export function useTimers() {
   };
 
   const addAlarm = (name: string, durationMs: number) => {
+    unlockAudio();
     const newAlarm: CustomAlarm = {
       id: Math.random().toString(36).substring(2, 9),
       name,
@@ -213,6 +289,7 @@ export function useTimers() {
   };
 
   const toggleAlarm = (id: string) => {
+    unlockAudio();
     setAlarms(prev => prev.map(a => {
       if (a.id !== id) return a;
       if (a.status === 'running') {
@@ -245,6 +322,8 @@ export function useTimers() {
     addAlarm,
     toggleAlarm,
     resetAlarm,
-    deleteAlarm
+    deleteAlarm,
+    ringingAlarm,
+    dismissAlarm
   };
 }

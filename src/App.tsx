@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Clock, History, Settings as SettingsIcon, Timer as TimerIcon } from 'lucide-react';
+import { Clock, History, Settings as SettingsIcon, Timer as TimerIcon, BellRing } from 'lucide-react';
 import { TodayTab } from './components/TodayTab';
 import { HistoryTab } from './components/HistoryTab';
 import { TimersTab } from './components/TimersTab';
 import { SettingsModal } from './components/SettingsModal';
 import { useHistory } from './hooks/useHistory';
+import { useTimers } from './hooks/useTimers';
 import { SessionState, HistorySession } from './types';
 import { getDateKey, exportPDF, downloadJSON } from './utils';
 
@@ -13,6 +14,7 @@ function App() {
   const [activeTab, setActiveTab] = useState<'today' | 'timers' | 'history'>('today');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { history, settings, saveSettings, addSession, deleteSession, clearAllHistory, getStorageUsed } = useHistory();
+  const timers = useTimers();
 
   const [session, setSession] = useState<SessionState>({
     status: 'idle',
@@ -168,7 +170,7 @@ function App() {
               onCheckOut={handleCheckOut} 
             />
           ) : activeTab === 'timers' ? (
-            <TimersTab key="timers" />
+            <TimersTab key="timers" timers={timers} />
           ) : (
             <HistoryTab 
               key="history"
@@ -182,6 +184,32 @@ function App() {
           )}
         </AnimatePresence>
       </main>
+
+      {/* Ringing Alarm Modal */}
+      <AnimatePresence>
+        {timers.ringingAlarm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl flex flex-col items-center text-center"
+            >
+              <div className="w-20 h-20 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mb-6 animate-pulse">
+                <BellRing size={40} />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">{timers.ringingAlarm.title}</h2>
+              <p className="text-gray-500 mb-8">{timers.ringingAlarm.message}</p>
+              <button
+                onClick={timers.dismissAlarm}
+                className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-semibold text-lg hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
+              >
+                Stop Alarm
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 pb-safe z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
