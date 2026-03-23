@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Clock, History, Settings as SettingsIcon } from 'lucide-react';
+import { Clock, History, Settings as SettingsIcon, Timer as TimerIcon } from 'lucide-react';
 import { TodayTab } from './components/TodayTab';
 import { HistoryTab } from './components/HistoryTab';
+import { TimersTab } from './components/TimersTab';
 import { SettingsModal } from './components/SettingsModal';
 import { useHistory } from './hooks/useHistory';
 import { SessionState, HistorySession } from './types';
 import { getDateKey, exportPDF, downloadJSON } from './utils';
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'today' | 'history'>('today');
+  const [activeTab, setActiveTab] = useState<'today' | 'timers' | 'history'>('today');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { history, settings, saveSettings, addSession, deleteSession, clearAllHistory, getStorageUsed } = useHistory();
 
@@ -166,6 +167,8 @@ function App() {
               setSession={setSession} 
               onCheckOut={handleCheckOut} 
             />
+          ) : activeTab === 'timers' ? (
+            <TimersTab key="timers" />
           ) : (
             <HistoryTab 
               key="history"
@@ -193,6 +196,17 @@ function App() {
           >
             <Clock size={20} className={activeTab === 'today' ? 'mr-2' : 'mr-2'} />
             <span className="text-sm font-medium">Today</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('timers')}
+            className={`flex items-center justify-center flex-1 h-12 rounded-full transition-all duration-200 ${
+              activeTab === 'timers' 
+                ? 'bg-indigo-600 text-white shadow-md' 
+                : 'bg-transparent text-gray-500 hover:bg-gray-50'
+            }`}
+          >
+            <TimerIcon size={20} className={activeTab === 'timers' ? 'mr-2' : 'mr-2'} />
+            <span className="text-sm font-medium">Timers</span>
           </button>
           <button
             onClick={() => setActiveTab('history')}

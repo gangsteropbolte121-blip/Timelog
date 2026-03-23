@@ -41,3 +41,25 @@ export interface Settings {
   autoExport: boolean;
   keepDays: number;
 }
+
+export type PomodoroMode = 'work' | 'shortBreak' | 'longBreak';
+
+export interface PomodoroState {
+  mode: PomodoroMode;
+  status: 'idle' | 'running' | 'paused';
+  remainingMs: number;
+  workDuration: number;
+  shortBreakDuration: number;
+  longBreakDuration: number;
+  cyclesCompleted: number;
+  endTime: number | null;
+}
+
+export interface CustomAlarm {
+  id: string;
+  name: string;
+  durationMs: number;
+  remainingMs: number;
+  endTime: number | null;
+  status: 'idle' | 'running' | 'paused' | 'finished';
+}
