@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Play, Pause, SkipForward, Plus, Trash2, Bell, RotateCcw } from 'lucide-react';
+import { Play, Pause, SkipForward, Plus, Trash2, Bell, RotateCcw, Edit2, Check } from 'lucide-react';
 import { useTimers } from '../hooks/useTimers';
 
 interface TimersTabProps {
   timers: ReturnType<typeof useTimers>;
 }
 
-export function TimersTab({ timers }: TimersTabProps) {
+export const TimersTab: React.FC<TimersTabProps> = ({ timers }) => {
   const {
     pomodoro,
     togglePomodoro,
@@ -18,12 +18,18 @@ export function TimersTab({ timers }: TimersTabProps) {
     addAlarm,
     toggleAlarm,
     resetAlarm,
-    deleteAlarm
+    deleteAlarm,
+    updateAlarm
   } = timers;
 
   const [newAlarmName, setNewAlarmName] = useState('');
   const [newAlarmHours, setNewAlarmHours] = useState('');
   const [newAlarmMinutes, setNewAlarmMinutes] = useState('');
+  
+  const [editingAlarmId, setEditingAlarmId] = useState<string | null>(null);
+  const [editAlarmName, setEditAlarmName] = useState('');
+  const [editAlarmHours, setEditAlarmHours] = useState('');
+  const [editAlarmMinutes, setEditAlarmMinutes] = useState('');
 
   const formatTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
@@ -48,6 +54,27 @@ export function TimersTab({ timers }: TimersTabProps) {
       setNewAlarmName('');
       setNewAlarmHours('');
       setNewAlarmMinutes('');
+    }
+  };
+
+  const startEditing = (alarm: any) => {
+    setEditingAlarmId(alarm.id);
+    setEditAlarmName(alarm.name);
+    const totalSeconds = Math.floor(alarm.durationMs / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    setEditAlarmHours(hours > 0 ? hours.toString() : '');
+    setEditAlarmMinutes(minutes > 0 ? minutes.toString() : '');
+  };
+
+  const saveEdit = (id: string) => {
+    const h = parseInt(editAlarmHours) || 0;
+    const m = parseInt(editAlarmMinutes) || 0;
+    const durationMs = (h * 3600 + m * 60) * 1000;
+    
+    if (durationMs > 0 && editAlarmName.trim()) {
+      updateAlarm(id, editAlarmName.trim(), durationMs);
+      setEditingAlarmId(null);
     }
   };
 
@@ -193,35 +220,89 @@ export function TimersTab({ timers }: TimersTabProps) {
           ) : (
             alarms.map(alarm => (
               <div key={alarm.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
-                <div className="flex-1">
-                  <div className="font-medium text-gray-900 text-sm">{alarm.name}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">
-                    {alarm.status === 'finished' ? (
-                      <span className="text-indigo-600 font-medium">Finished</span>
-                    ) : (
-                      <span className="font-mono">{formatTime(alarm.remainingMs)}</span>
-                    )}
+                {editingAlarmId === alarm.id ? (
+                  <div className="flex-1 flex flex-col space-y-2 mr-4">
+                    <input
+                      type="text"
+                      value={editAlarmName}
+                      onChange={e => setEditAlarmName(e.target.value)}
+                      className="w-full px-2 py-1 bg-white border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm"
+                      autoFocus
+                    />
+                    <div className="flex space-x-2">
+                      <input
+                        type="number"
+                        placeholder="H"
+                        min="0"
+                        value={editAlarmHours}
+                        onChange={e => setEditAlarmHours(e.target.value)}
+                        className="w-16 px-2 py-1 bg-white border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm"
+                      />
+                      <input
+                        type="number"
+                        placeholder="M"
+                        min="0"
+                        max="59"
+                        value={editAlarmMinutes}
+                        onChange={e => setEditAlarmMinutes(e.target.value)}
+                        className="w-16 px-2 py-1 bg-white border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm"
+                      />
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900 text-sm">{alarm.name}</div>
+                    <div className="text-xs text-gray-500 mt-0.5">
+                      {alarm.status === 'finished' ? (
+                        <span className="text-indigo-600 font-medium">Finished</span>
+                      ) : (
+                        <span className="font-mono">{formatTime(alarm.remainingMs)}</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
                 <div className="flex items-center space-x-2">
-                  {alarm.status !== 'finished' && (
+                  {editingAlarmId === alarm.id ? (
                     <button
-                      onClick={() => toggleAlarm(alarm.id)}
-                      className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                      onClick={() => saveEdit(alarm.id)}
+                      disabled={!editAlarmName.trim() || (!editAlarmHours && !editAlarmMinutes)}
+                      className="p-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-50"
                     >
-                      {alarm.status === 'running' ? <Pause size={18} /> : <Play size={18} />}
+                      <Check size={18} />
                     </button>
-                  )}
-                  {alarm.status === 'finished' && (
-                    <button
-                      onClick={() => resetAlarm(alarm.id)}
-                      className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                    >
-                      <RotateCcw size={18} />
-                    </button>
+                  ) : (
+                    <>
+                      {alarm.status !== 'finished' && (
+                        <button
+                          onClick={() => toggleAlarm(alarm.id)}
+                          className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                        >
+                          {alarm.status === 'running' ? <Pause size={18} /> : <Play size={18} />}
+                        </button>
+                      )}
+                      {alarm.status === 'finished' && (
+                        <button
+                          onClick={() => resetAlarm(alarm.id)}
+                          className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                        >
+                          <RotateCcw size={18} />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => startEditing(alarm)}
+                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                      >
+                        <Edit2 size={18} />
+                      </button>
+                    </>
                   )}
                   <button
-                    onClick={() => deleteAlarm(alarm.id)}
+                    onClick={() => {
+                      if(window.confirm('Delete this reminder?')) {
+                        deleteAlarm(alarm.id);
+                      }
+                    }}
                     className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                   >
                     <Trash2 size={18} />

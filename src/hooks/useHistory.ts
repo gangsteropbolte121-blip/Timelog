@@ -1,89 +1,133 @@
 import { useState, useEffect } from 'react';
-import { HistorySession, Settings } from '../types';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../db';
+import { HistorySession, Settings, Project, Decision } from '../types';
 
 export const useHistory = () => {
-  const [history, setHistory] = useState<HistorySession[]>([]);
-  const [settings, setSettings] = useState<Settings>({
-    autoExport: false,
-    keepDays: 90,
-  });
+  const history = useLiveQuery(() => db.sessions.orderBy('date').reverse().toArray()) || [];
+  const projects = useLiveQuery(() => db.projects.toArray()) || [];
+  const decisions = useLiveQuery(() => db.decisions.orderBy('date').reverse().toArray()) || [];
+  const settingsArr = useLiveQuery(() => db.settings.toArray());
+  const settings = settingsArr?.length ? settingsArr[0] : { autoExport: false, keepDays: 90, id: 1 };
+
+  const [isMigrating, setIsMigrating] = useState(true);
 
   useEffect(() => {
-    const storedHistory = localStorage.getItem('timelog_history');
-    if (storedHistory) {
-      try {
-        setHistory(JSON.parse(storedHistory));
-      } catch (e) {
-        console.error('Failed to parse history', e);
-      }
-    }
+    const migrateData = async () => {
+      const migrated = localStorage.getItem('timelog_migrated_dexie');
+      if (!migrated) {
+        try {
+          // Migrate Projects
+          const storedProjects = localStorage.getItem('timelog_projects');
+          if (storedProjects) {
+            const parsed = JSON.parse(storedProjects);
+            if (parsed.length) await db.projects.bulkPut(parsed);
+          }
+          // Migrate Sessions
+          const storedHistory = localStorage.getItem('timelog_history');
+          if (storedHistory) {
+            const parsed = JSON.parse(storedHistory);
+            if (parsed.length) await db.sessions.bulkPut(parsed);
+          }
+          // Migrate Decisions
+          const storedDecisions = localStorage.getItem('timelog_decisions');
+          if (storedDecisions) {
+            const parsed = JSON.parse(storedDecisions);
+            if (parsed.length) await db.decisions.bulkPut(parsed);
+          }
+          // Migrate Settings
+          const storedSettings = localStorage.getItem('timelog_settings');
+          if (storedSettings) {
+            const parsed = JSON.parse(storedSettings);
+            await db.settings.put({ ...parsed, id: 1 });
+          }
 
-    const storedSettings = localStorage.getItem('timelog_settings');
-    if (storedSettings) {
-      try {
-        setSettings(JSON.parse(storedSettings));
-      } catch (e) {
-        console.error('Failed to parse settings', e);
+          localStorage.setItem('timelog_migrated_dexie', 'true');
+        } catch (e) {
+          console.error('Migration failed', e);
+        }
       }
-    }
+      setIsMigrating(false);
+    };
+    migrateData();
   }, []);
 
-  const saveHistory = (newHistory: HistorySession[]) => {
-    setHistory(newHistory);
-    try {
-      localStorage.setItem('timelog_history', JSON.stringify(newHistory));
-    } catch (e) {
-      console.error('Failed to save history (quota exceeded?)', e);
-    }
+  const saveSettings = async (newSettings: Settings) => {
+    await db.settings.put({ ...newSettings, id: 1 });
   };
 
-  const saveSettings = (newSettings: Settings) => {
-    setSettings(newSettings);
-    try {
-      localStorage.setItem('timelog_settings', JSON.stringify(newSettings));
-    } catch (e) {
-      console.error('Failed to save settings', e);
-    }
-  };
-
-  const addSession = (session: HistorySession) => {
-    const updatedHistory = [session, ...history];
+  const addSession = async (session: HistorySession) => {
+    await db.sessions.put(session);
     
     // Purge old sessions based on keepDays
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - settings.keepDays);
+    const cutoffDateStr = cutoffDate.toISOString().split('T')[0];
     
-    const filteredHistory = updatedHistory.filter(s => new Date(s.date) >= cutoffDate);
-    saveHistory(filteredHistory);
+    const oldSessions = await db.sessions.where('date').below(cutoffDateStr).toArray();
+    if (oldSessions.length > 0) {
+      const oldIds = oldSessions.map(s => s.id);
+      await db.sessions.bulkDelete(oldIds);
+    }
   };
 
-  const deleteSession = (id: string) => {
-    const updatedHistory = history.filter(s => s.id !== id);
-    saveHistory(updatedHistory);
+  const updateSession = async (session: HistorySession) => {
+    await db.sessions.put(session);
   };
 
-  const clearAllHistory = () => {
-    saveHistory([]);
+  const deleteSession = async (id: string) => {
+    await db.sessions.delete(id);
+  };
+
+  const clearAllHistory = async () => {
+    await db.sessions.clear();
+  };
+
+  const addProject = async (project: Project) => {
+    await db.projects.put(project);
+  };
+
+  const updateProject = async (project: Project) => {
+    await db.projects.put(project);
+  };
+
+  const deleteProject = async (id: string) => {
+    await db.projects.delete(id);
+  };
+
+  const addDecision = async (decision: Decision) => {
+    await db.decisions.put(decision);
+  };
+
+  const updateDecision = async (decision: Decision) => {
+    await db.decisions.put(decision);
+  };
+
+  const deleteDecision = async (id: string) => {
+    await db.decisions.delete(id);
   };
 
   const getStorageUsed = () => {
-    let totalBytes = 0;
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key?.startsWith('timelog_')) {
-        totalBytes += (localStorage.getItem(key)?.length || 0) * 2; // UTF-16 characters are 2 bytes
-      }
-    }
-    return (totalBytes / 1024).toFixed(1);
+    return "IndexedDB (Unlimited)";
   };
 
   return {
     history,
+    projects,
+    decisions,
     settings,
     saveSettings,
     addSession,
+    updateSession,
     deleteSession,
     clearAllHistory,
+    addProject,
+    updateProject,
+    deleteProject,
+    addDecision,
+    updateDecision,
+    deleteDecision,
     getStorageUsed,
+    isMigrating
   };
 };

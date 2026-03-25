@@ -12,12 +12,47 @@ export interface LogEntry {
   durationMs?: number;
 }
 
+export interface ResourceLink {
+  id: string;
+  name: string;
+  url: string;
+}
+
+export interface ResourceCategory {
+  id: string;
+  name: string;
+  links: ResourceLink[];
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  rate: number;
+  figmaUrl?: string;
+  resources?: ResourceCategory[];
+}
+
+export interface Decision {
+  id: string;
+  date: string;
+  title: string;
+  reasoning: string;
+  impact: 'Low' | 'Med' | 'High';
+}
+
 export interface SessionState {
   status: Status;
   checkInTime: number | null;
   checkOutTime: number | null;
   breaks: BreakSession[];
   logs: LogEntry[];
+  projectId: string | null;
+  dailyIntent: string;
+  activeTask: string;
+  reflections: {
+    win: string;
+    blocker: string;
+  };
 }
 
 export interface HistorySession {
@@ -29,15 +64,24 @@ export interface HistorySession {
   checkOutTime: number | null;
   breaks: BreakSession[];
   logs: LogEntry[];
+  projectId: string | null;
+  dailyIntent: string;
+  activeTask: string;
+  reflections: {
+    win: string;
+    blocker: string;
+  };
   summary: {
     totalSession: number;
     totalBreak: number;
     effectiveHours: number;
     breakCount: number;
+    earnedValue: number;
   };
 }
 
 export interface Settings {
+  id?: number;
   autoExport: boolean;
   keepDays: number;
 }
