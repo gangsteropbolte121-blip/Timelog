@@ -123,7 +123,7 @@ export const JournalTab: React.FC<JournalTabProps> = ({ decisions, addDecision, 
         <motion.form initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} onSubmit={handleSubmit} className="tl-card p-5 space-y-4 overflow-hidden">
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-text-muted)' }}>Decision</label>
-            <input type="text" placeholder="e.g., Raised hourly rate to $120" value={title} onChange={e => setTitle(e.target.value)} required className="w-full px-4 py-2.5 rounded-xl text-sm focus:outline-none" style={{ background: 'var(--color-surface-low)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }} />
+            <input type="text" placeholder="e.g., Raised hourly rate to ₹5000" value={title} onChange={e => setTitle(e.target.value)} required className="w-full px-4 py-2.5 rounded-xl text-sm focus:outline-none" style={{ background: 'var(--color-surface-low)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }} />
           </div>
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-text-muted)' }}>Reasoning</label>

@@ -142,7 +142,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
                         ) : (
                           <div className="flex-1 min-w-0">
                             <span className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{project.name}</span>
-                            <span className="text-xs ml-2 font-mono font-semibold" style={{ color: 'var(--color-success)' }}>${project.rate}/hr</span>
+                            <span className="text-xs ml-2 font-mono font-semibold" style={{ color: 'var(--color-success)' }}>₹{project.rate}/hr</span>
                           </div>
                         )}
                         <div className="flex items-center gap-1 shrink-0">

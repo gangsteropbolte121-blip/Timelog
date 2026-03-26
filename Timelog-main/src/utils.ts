@@ -66,7 +66,7 @@ export const exportPDF = (session: SessionState | HistorySession, dateStr: strin
   doc.setFont("helvetica", "normal");
   doc.text(`Client/Project: ${projectName}`, 20, 52);
   if (projectRate > 0) {
-    doc.text(`Hourly Rate: $${projectRate.toFixed(2)}/hr`, 20, 59);
+    doc.text(`Hourly Rate: ₹${projectRate.toFixed(2)}/hr`, 20, 59);
   }
 
   // Summary Box
@@ -109,7 +109,7 @@ export const exportPDF = (session: SessionState | HistorySession, dateStr: strin
   if (earnedValue > 0) {
     doc.setFont("helvetica", "bold");
     doc.setTextColor(16, 185, 129); // Emerald 500
-    doc.text(`Subtotal: $${earnedValue.toFixed(2)}`, 25, 110);
+    doc.text(`Subtotal: ₹${earnedValue.toFixed(2)}`, 25, 110);
     doc.setTextColor(17, 24, 39);
   }
 
@@ -259,8 +259,8 @@ export const generateInvoice = (session: HistorySession, projects: Project[]) =>
   }
 
   doc.text(hours.toFixed(2), pageWidth - 80, startY + 22, { align: 'right' });
-  doc.text(`$${rate.toFixed(2)}`, pageWidth - 50, startY + 22, { align: 'right' });
-  doc.text(`$${total.toFixed(2)}`, pageWidth - 25, startY + 22, { align: 'right' });
+  doc.text(`₹${rate.toFixed(2)}`, pageWidth - 50, startY + 22, { align: 'right' });
+  doc.text(`₹${total.toFixed(2)}`, pageWidth - 25, startY + 22, { align: 'right' });
 
   doc.setDrawColor(229, 231, 235);
   doc.line(20, startY + 35, pageWidth - 20, startY + 35);
@@ -270,7 +270,7 @@ export const generateInvoice = (session: HistorySession, projects: Project[]) =>
   doc.text("Total Due:", pageWidth - 60, startY + 50);
   doc.setFontSize(14);
   doc.setTextColor(79, 70, 229);
-  doc.text(`$${total.toFixed(2)}`, pageWidth - 25, startY + 50, { align: 'right' });
+  doc.text(`₹${total.toFixed(2)}`, pageWidth - 25, startY + 50, { align: 'right' });
 
   // Footer
   const pageHeight = doc.internal.pageSize.getHeight();
