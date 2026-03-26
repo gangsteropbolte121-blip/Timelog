@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Play, Square, Coffee, Download, ChevronDown, Copy, Share2, Clock, ArrowRightCircle, Pause, CheckCircle2 } from 'lucide-react';
 import * as LZString from 'lz-string';
 import { motion, AnimatePresence } from 'motion/react';
-import { SessionState, HistorySession, Project } from '../types';
+import { SessionState, HistorySession, Project, CURRENCY_SYMBOLS } from '../types';
 import { formatDuration, formatClock, formatDate, exportPDF, getDateKey } from '../utils';
 
 interface TodayTabProps {
@@ -167,8 +167,8 @@ export const TodayTab: React.FC<TodayTabProps> = ({ session, setSession, onCheck
 
         {/* Live earnings */}
         {isActive && session.projectId && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-lg font-mono font-semibold mb-4" style={{ color: 'var(--color-success)' }}>
-            ₹{getLiveEarnings().toFixed(2)}
+<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-lg font-mono font-semibold mb-4" style={{ color: 'var(--color-success)' }}>
+            +{activeProject ? CURRENCY_SYMBOLS[activeProject.currency] : '₹'}{getLiveEarnings().toFixed(2)}
           </motion.div>
         )}
         {(!isActive || !session.projectId) && <div className="mb-4" />}
@@ -176,7 +176,7 @@ export const TodayTab: React.FC<TodayTabProps> = ({ session, setSession, onCheck
         {/* Project context chip */}
         {activeProject && (
           <div className="mb-4 px-3 py-1.5 rounded-lg text-xs font-medium" style={{ background: 'var(--color-surface-low)', color: 'var(--color-text-secondary)' }}>
-            {activeProject.name} · ₹{activeProject.rate}/hr
+            {activeProject.name} · {CURRENCY_SYMBOLS[activeProject.currency]}{activeProject.rate}/hr
           </div>
         )}
 
@@ -275,7 +275,7 @@ export const TodayTab: React.FC<TodayTabProps> = ({ session, setSession, onCheck
                       style={{ background: 'var(--color-surface-low)', color: 'var(--color-text-primary)', border: '1px solid var(--color-border)' }}
                     >
                       <option value="">Personal / No Project</option>
-                      {projects.map(p => <option key={p.id} value={p.id}>{p.name} (₹{p.rate}/hr)</option>)}
+                      {projects.map(p => <option key={p.id} value={p.id}>{p.name} ({CURRENCY_SYMBOLS[p.currency]}{p.rate}/hr)</option>)}
                     </select>
                     <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--color-text-muted)' }} />
                   </div>

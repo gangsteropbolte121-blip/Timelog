@@ -24,10 +24,20 @@ export interface ResourceCategory {
   links: ResourceLink[];
 }
 
+export type Currency = 'INR' | 'USD' | 'EUR' | 'GBP';
+
+export const CURRENCY_SYMBOLS: Record<Currency, string> = {
+  INR: '₹',
+  USD: '$',
+  EUR: '€',
+  GBP: '£',
+};
+
 export interface Project {
   id: string;
   name: string;
   rate: number;
+  currency: Currency;
   figmaUrl?: string;
   resources?: ResourceCategory[];
 }

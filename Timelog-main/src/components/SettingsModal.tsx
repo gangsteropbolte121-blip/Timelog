@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Trash2, HardDrive, Settings as SettingsIcon, Briefcase, Plus, Edit2, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Settings, Project } from '../types';
+import { Settings, Project, Currency, CURRENCY_SYMBOLS } from '../types';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -20,9 +20,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
   const [activeTab, setActiveTab] = useState<'projects' | 'general' | 'data'>('projects');
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectRate, setNewProjectRate] = useState('');
+  const [newProjectCurrency, setNewProjectCurrency] = useState<Currency>('INR');
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [editProjectName, setEditProjectName] = useState('');
   const [editProjectRate, setEditProjectRate] = useState('');
+  const [editProjectCurrency, setEditProjectCurrency] = useState<Currency>('INR');
 
   if (!isOpen) return null;
 
@@ -30,7 +32,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
     e.preventDefault();
     if (!newProjectName.trim()) return;
     const rate = parseFloat(newProjectRate);
-    addProject({ id: Math.random().toString(36).substring(2, 9), name: newProjectName.trim(), rate: isNaN(rate) ? 0 : rate });
+    addProject({ id: Math.random().toString(36).substring(2, 9), name: newProjectName.trim(), rate: isNaN(rate) ? 0 : rate, currency: newProjectCurrency });
     setNewProjectName('');
     setNewProjectRate('');
   };
@@ -38,7 +40,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
   const saveEdit = (project: Project) => {
     if (!editProjectName.trim()) return;
     const rate = parseFloat(editProjectRate);
-    updateProject({ ...project, name: editProjectName.trim(), rate: isNaN(rate) ? 0 : rate });
+    updateProject({ ...project, name: editProjectName.trim(), rate: isNaN(rate) ? 0 : rate, currency: editProjectCurrency });
     setEditingProjectId(null);
   };
 
@@ -105,15 +107,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
                     className="flex-1 px-3 py-2 rounded-xl text-sm focus:outline-none"
                     style={{ background: 'var(--color-surface-low)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
                   />
-                  <div className="relative w-24 shrink-0">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: 'var(--color-text-muted)' }}>$</span>
+                  <select
+                    value={newProjectCurrency}
+                    onChange={e => setNewProjectCurrency(e.target.value as Currency)}
+                    className="w-20 px-2 py-2 rounded-xl text-sm focus:outline-none shrink-0"
+                    style={{ background: 'var(--color-surface-low)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+                  >
+                    {Object.entries(CURRENCY_SYMBOLS).map(([code, symbol]) => (
+                      <option key={code} value={code}>{symbol} {code}</option>
+                    ))}
+                  </select>
+                  <div className="relative w-20 shrink-0">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: 'var(--color-text-muted)' }}>{CURRENCY_SYMBOLS[newProjectCurrency]}</span>
                     <input
                       type="number"
                       placeholder="0"
                       value={newProjectRate}
                       onChange={e => setNewProjectRate(e.target.value)}
                       min="0" step="0.01"
-                      className="w-full pl-7 pr-3 py-2 rounded-xl text-sm focus:outline-none"
+                      className="w-full pl-6 pr-2 py-2 rounded-xl text-sm focus:outline-none"
                       style={{ background: 'var(--color-surface-low)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
                     />
                   </div>
@@ -134,22 +146,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
                         {editingProjectId === project.id ? (
                           <div className="flex-1 flex items-center gap-2 mr-2">
                             <input value={editProjectName} onChange={e => setEditProjectName(e.target.value)} autoFocus className="flex-1 px-2 py-1.5 rounded-lg text-sm focus:outline-none" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }} />
-                            <div className="relative w-18 shrink-0">
-                              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs" style={{ color: 'var(--color-text-muted)' }}>$</span>
-                              <input type="number" value={editProjectRate} onChange={e => setEditProjectRate(e.target.value)} className="w-full pl-5 pr-2 py-1.5 rounded-lg text-sm focus:outline-none" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }} min="0" step="0.01" />
+                            <select
+                              value={editProjectCurrency}
+                              onChange={e => setEditProjectCurrency(e.target.value as Currency)}
+                              className="w-18 px-1 py-1.5 rounded-lg text-xs focus:outline-none shrink-0"
+                              style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+                            >
+                              {Object.entries(CURRENCY_SYMBOLS).map(([code, symbol]) => (
+                                <option key={code} value={code}>{symbol}</option>
+                              ))}
+                            </select>
+                            <div className="relative w-16 shrink-0">
+                              <input type="number" value={editProjectRate} onChange={e => setEditProjectRate(e.target.value)} className="w-full pl-2 pr-2 py-1.5 rounded-lg text-sm focus:outline-none" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }} min="0" step="0.01" />
                             </div>
                           </div>
                         ) : (
                           <div className="flex-1 min-w-0">
                             <span className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{project.name}</span>
-                            <span className="text-xs ml-2 font-mono font-semibold" style={{ color: 'var(--color-success)' }}>₹{project.rate}/hr</span>
+                            <span className="text-xs ml-2 font-mono font-semibold" style={{ color: 'var(--color-success)' }}>{CURRENCY_SYMBOLS[project.currency]}{project.rate}/hr</span>
                           </div>
                         )}
                         <div className="flex items-center gap-1 shrink-0">
                           {editingProjectId === project.id ? (
                             <button onClick={() => saveEdit(project)} className="p-1.5 rounded-lg" style={{ color: 'var(--color-success)', background: 'var(--color-success-muted)' }}><Check size={14} /></button>
                           ) : (
-                            <button onClick={() => { setEditingProjectId(project.id); setEditProjectName(project.name); setEditProjectRate(project.rate.toString()); }} className="p-1.5 rounded-lg" style={{ color: 'var(--color-text-muted)' }}><Edit2 size={14} /></button>
+                            <button onClick={() => { setEditingProjectId(project.id); setEditProjectName(project.name); setEditProjectRate(project.rate.toString()); setEditProjectCurrency(project.currency); }} className="p-1.5 rounded-lg" style={{ color: 'var(--color-text-muted)' }}><Edit2 size={14} /></button>
                           )}
                           <button onClick={() => { if (window.confirm('Delete this project?')) deleteProject(project.id); }} className="p-1.5 rounded-lg" style={{ color: 'var(--color-text-muted)' }}><Trash2 size={14} /></button>
                         </div>

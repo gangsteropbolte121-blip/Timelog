@@ -1,5 +1,5 @@
 import { jsPDF } from 'jspdf';
-import { HistorySession, SessionState, Project } from './types';
+import { HistorySession, SessionState, Project, CURRENCY_SYMBOLS } from './types';
 
 export const getDateKey = (date = new Date()) => {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -53,20 +53,23 @@ export const exportPDF = (session: SessionState | HistorySession, dateStr: strin
   // Project Info
   let projectName = 'None';
   let projectRate = 0;
+  let projectCurrency = 'INR';
   if (session.projectId && projects) {
     const project = projects.find(p => p.id === session.projectId);
     if (project) {
       projectName = project.name;
       projectRate = project.rate;
+      projectCurrency = project.currency;
     }
   }
+  const currencySymbol = CURRENCY_SYMBOLS[projectCurrency];
 
   doc.setFont("helvetica", "bold");
   doc.text("Project Details", 20, 45);
   doc.setFont("helvetica", "normal");
   doc.text(`Client/Project: ${projectName}`, 20, 52);
   if (projectRate > 0) {
-    doc.text(`Hourly Rate: ₹${projectRate.toFixed(2)}/hr`, 20, 59);
+    doc.text(`Hourly Rate: ${currencySymbol}${projectRate.toFixed(2)}/hr`, 20, 59);
   }
 
   // Summary Box
@@ -109,7 +112,7 @@ export const exportPDF = (session: SessionState | HistorySession, dateStr: strin
   if (earnedValue > 0) {
     doc.setFont("helvetica", "bold");
     doc.setTextColor(16, 185, 129); // Emerald 500
-    doc.text(`Subtotal: ₹${earnedValue.toFixed(2)}`, 25, 110);
+    doc.text(`Subtotal: ${currencySymbol}${earnedValue.toFixed(2)}`, 25, 110);
     doc.setTextColor(17, 24, 39);
   }
 
@@ -203,6 +206,8 @@ export const generateInvoice = (session: HistorySession, projects: Project[]) =>
   const project = projects.find(p => p.id === session.projectId);
   const projectName = project ? project.name : 'Unknown Project';
   const rate = project ? project.rate : 0;
+  const currency = project ? project.currency : 'INR';
+  const currencySymbol = CURRENCY_SYMBOLS[currency];
   const hours = session.summary.effectiveHours / (1000 * 60 * 60);
   const total = hours * rate;
 
@@ -259,8 +264,8 @@ export const generateInvoice = (session: HistorySession, projects: Project[]) =>
   }
 
   doc.text(hours.toFixed(2), pageWidth - 80, startY + 22, { align: 'right' });
-  doc.text(`₹${rate.toFixed(2)}`, pageWidth - 50, startY + 22, { align: 'right' });
-  doc.text(`₹${total.toFixed(2)}`, pageWidth - 25, startY + 22, { align: 'right' });
+  doc.text(`${currencySymbol}${rate.toFixed(2)}`, pageWidth - 50, startY + 22, { align: 'right' });
+  doc.text(`${currencySymbol}${total.toFixed(2)}`, pageWidth - 25, startY + 22, { align: 'right' });
 
   doc.setDrawColor(229, 231, 235);
   doc.line(20, startY + 35, pageWidth - 20, startY + 35);
@@ -270,7 +275,7 @@ export const generateInvoice = (session: HistorySession, projects: Project[]) =>
   doc.text("Total Due:", pageWidth - 60, startY + 50);
   doc.setFontSize(14);
   doc.setTextColor(79, 70, 229);
-  doc.text(`₹${total.toFixed(2)}`, pageWidth - 25, startY + 50, { align: 'right' });
+  doc.text(`${currencySymbol}${total.toFixed(2)}`, pageWidth - 25, startY + 50, { align: 'right' });
 
   // Footer
   const pageHeight = doc.internal.pageSize.getHeight();
