@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Trash2, HardDrive, Settings as SettingsIcon, Briefcase, Plus, Edit2, Check } from 'lucide-react';
+import { X, Trash2, HardDrive, Settings as SettingsIcon, Briefcase, Plus, Edit2, Check, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Settings, Project, Currency, CURRENCY_SYMBOLS } from '../types';
 
@@ -65,8 +65,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.96, opacity: 0, y: 16 }}
           onClick={e => e.stopPropagation()}
-          className="w-full max-w-md my-4 flex flex-col"
-          style={{ background: 'var(--color-surface)', borderRadius: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.18)', maxHeight: '85vh' }}
+          className="w-full max-w-lg my-4 flex flex-col"
+          style={{ background: 'var(--color-surface)', borderRadius: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.18)', maxHeight: '85vh', overflow: 'hidden' }}
         >
           {/* Header */}
           <div className="flex items-center justify-between px-6 pt-6 pb-4 shrink-0">
@@ -97,27 +97,30 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
             {/* Projects tab */}
             {activeTab === 'projects' && (
               <div className="space-y-4">
-                <form onSubmit={handleAddProject} className="flex gap-2">
+                <form onSubmit={handleAddProject} className="flex flex-wrap gap-2">
                   <input
                     type="text"
                     placeholder="Project name"
                     value={newProjectName}
                     onChange={e => setNewProjectName(e.target.value)}
                     required
-                    className="flex-1 px-3 py-2 rounded-xl text-sm focus:outline-none"
+                    className="flex-1 min-w-[120px] px-3 py-2 rounded-xl text-sm focus:outline-none"
                     style={{ background: 'var(--color-surface-low)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
                   />
-                  <select
-                    value={newProjectCurrency}
-                    onChange={e => setNewProjectCurrency(e.target.value as Currency)}
-                    className="w-20 px-2 py-2 rounded-xl text-sm focus:outline-none shrink-0"
-                    style={{ background: 'var(--color-surface-low)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
-                  >
-                    {Object.entries(CURRENCY_SYMBOLS).map(([code, symbol]) => (
-                      <option key={code} value={code}>{symbol} {code}</option>
-                    ))}
-                  </select>
-                  <div className="relative w-20 shrink-0">
+                  <div className="relative min-w-[90px]">
+                    <select
+                      value={newProjectCurrency}
+                      onChange={e => setNewProjectCurrency(e.target.value as Currency)}
+                      className="w-full px-3 py-2 pr-8 rounded-xl text-sm focus:outline-none appearance-none cursor-pointer"
+                      style={{ background: 'var(--color-surface-low)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+                    >
+                      {Object.entries(CURRENCY_SYMBOLS).map(([code, symbol]) => (
+                        <option key={code} value={code}>{symbol} {code}</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--color-text-muted)' }} />
+                  </div>
+                  <div className="relative min-w-[80px]">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: 'var(--color-text-muted)' }}>{CURRENCY_SYMBOLS[newProjectCurrency]}</span>
                     <input
                       type="number"
@@ -144,18 +147,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
                     {projects.map(project => (
                       <div key={project.id} className="flex items-center justify-between p-3 rounded-xl" style={{ background: 'var(--color-surface-low)', border: '1px solid var(--color-border)' }}>
                         {editingProjectId === project.id ? (
-                          <div className="flex-1 flex items-center gap-2 mr-2">
-                            <input value={editProjectName} onChange={e => setEditProjectName(e.target.value)} autoFocus className="flex-1 px-2 py-1.5 rounded-lg text-sm focus:outline-none" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }} />
-                            <select
-                              value={editProjectCurrency}
-                              onChange={e => setEditProjectCurrency(e.target.value as Currency)}
-                              className="w-18 px-1 py-1.5 rounded-lg text-xs focus:outline-none shrink-0"
-                              style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
-                            >
-                              {Object.entries(CURRENCY_SYMBOLS).map(([code, symbol]) => (
-                                <option key={code} value={code}>{symbol}</option>
-                              ))}
-                            </select>
+                          <div className="flex-1 flex items-center gap-2 mr-2 flex-wrap">
+                            <input value={editProjectName} onChange={e => setEditProjectName(e.target.value)} autoFocus className="flex-1 min-w-[100px] px-2 py-1.5 rounded-lg text-sm focus:outline-none" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }} />
+                            <div className="relative min-w-[70px]">
+                              <select
+                                value={editProjectCurrency}
+                                onChange={e => setEditProjectCurrency(e.target.value as Currency)}
+                                className="w-full px-2 py-1.5 pr-6 rounded-lg text-xs focus:outline-none appearance-none cursor-pointer"
+                                style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+                              >
+                                {Object.entries(CURRENCY_SYMBOLS).map(([code, symbol]) => (
+                                  <option key={code} value={code}>{symbol}</option>
+                                ))}
+                              </select>
+                              <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--color-text-muted)' }} />
+                            </div>
                             <div className="relative w-16 shrink-0">
                               <input type="number" value={editProjectRate} onChange={e => setEditProjectRate(e.target.value)} className="w-full pl-2 pr-2 py-1.5 rounded-lg text-sm focus:outline-none" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }} min="0" step="0.01" />
                             </div>
